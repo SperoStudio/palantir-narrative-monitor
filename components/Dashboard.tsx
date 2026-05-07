@@ -7,6 +7,7 @@ import SentimentChart from './SentimentChart';
 import IssueAreas from './IssueAreas';
 import AudienceReadiness from './AudienceReadiness';
 import SignalFeed from './SignalFeed';
+import RedditDiscourse from './RedditDiscourse';
 import { useRouter } from 'next/navigation';
 
 interface Props {
@@ -126,10 +127,15 @@ export default function Dashboard({ snapshot, history }: Props) {
       </div>
 
       {/* Audience readiness + Signal feed */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '12px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '12px', marginBottom: '12px' }}>
         <AudienceReadiness readiness={snapshot.audience_readiness} />
         <SignalFeed signals={snapshot.signals} />
       </div>
+
+      {/* Public discourse — only shown when Reddit data exists */}
+      {snapshot.reddit_sentiment && (
+        <RedditDiscourse reddit={snapshot.reddit_sentiment} />
+      )}
     </div>
   );
 }
