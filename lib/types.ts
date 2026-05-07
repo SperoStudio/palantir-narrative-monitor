@@ -25,6 +25,27 @@ export interface Signal {
   surgeWatch: boolean;
 }
 
+export interface RedditThread {
+  title: string;
+  subreddit: string;
+  sentiment: 'Favorable' | 'Critical' | 'Neutral';
+  engagement: number;
+  url: string;
+}
+
+export interface RedditSentiment {
+  overallScore: number;
+  postCount: number;
+  commentVolume: number;
+  volumeSignal: 'Spike' | 'Normal' | 'Quiet';
+  topThreads: RedditThread[];
+  issueBreakdown: {
+    name: string;
+    mentions: number;
+    sentiment: number;
+  }[];
+}
+
 export interface SentimentSnapshot {
   id: string;
   created_at: string;
@@ -36,6 +57,7 @@ export interface SentimentSnapshot {
   sentiment_trend: SentimentTrend;
   audience_readiness: AudienceReadiness;
   signals: Signal[];
+  reddit_sentiment?: RedditSentiment | null;
 }
 
 export interface AnthropicPayload {
