@@ -7,13 +7,6 @@ import { supabaseServer } from '@/lib/supabase';
 export const maxDuration = 60;
 
 async function handler(_req: NextRequest) {
-  // Verify cron secret when called by Vercel Cron scheduler
-  const authHeader = _req.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
     const payload = await fetchSentimentFromClaude();
 
