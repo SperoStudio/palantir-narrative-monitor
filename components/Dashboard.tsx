@@ -48,6 +48,7 @@ export default function Dashboard({ snapshot, history }: Props) {
     <div style={{ paddingTop: '0.25rem' }}>
       {/* Header bar */}
       <div
+        className="dash-header"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -86,7 +87,7 @@ export default function Dashboard({ snapshot, history }: Props) {
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="dash-header-right" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {refreshError && (
             <span style={{ fontSize: '11px', color: 'var(--red)' }}>{refreshError}</span>
           )}
@@ -114,20 +115,13 @@ export default function Dashboard({ snapshot, history }: Props) {
       <MetricCards snapshot={snapshot} />
 
       {/* Sentiment trend + Issue areas */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '3fr 2fr',
-          gap: '12px',
-          marginBottom: '12px',
-        }}
-      >
+      <div className="grid-chart-issues">
         <SentimentChart snapshots={history} />
         <IssueAreas issueAreas={snapshot.issue_areas} />
       </div>
 
       {/* Audience readiness + Signal feed */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '12px', marginBottom: '12px' }}>
+      <div className="grid-audience-signals">
         <AudienceReadiness readiness={snapshot.audience_readiness} />
         <SignalFeed signals={snapshot.signals} />
       </div>

@@ -7,9 +7,9 @@ function sentColor(s: number) {
 }
 
 const ROWS = [
-  { key: 'generalPublic' as const, label: 'General public',  note: 'CTV + OOH active' },
-  { key: 'stakeholders'  as const, label: 'Stakeholders',    note: 'AfroTech Nov pipeline' },
-  { key: 'policymakers'  as const, label: 'Policymakers',    note: 'Site visits in progress' },
+  { key: 'generalPublic' as const, label: 'General public'  },
+  { key: 'stakeholders'  as const, label: 'Stakeholders'    },
+  { key: 'policymakers'  as const, label: 'Policymakers'    },
 ];
 
 interface Props {
@@ -32,7 +32,7 @@ export default function AudienceReadinessPanel({ readiness }: Props) {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        {ROWS.map(({ key, label, note }) => {
+        {ROWS.map(({ key, label }) => {
           const val = readiness[key];
           return (
             <div key={key}>
@@ -55,25 +55,11 @@ export default function AudienceReadinessPanel({ readiness }: Props) {
                   style={{ width: `${val}%`, background: sentColor(val) }}
                 />
               </div>
-              <div style={{ fontSize: '10px', color: 'var(--text-3)', marginTop: '3px' }}>
-                {note}
-              </div>
             </div>
           );
         })}
       </div>
 
-      <div
-        style={{
-          marginTop: '14px',
-          paddingTop: '12px',
-          borderTop: '1px solid var(--border)',
-          fontSize: '11px',
-          color: 'var(--text-3)',
-        }}
-      >
-        Target: all audiences 70%+ by Q4 2026
-      </div>
     </div>
   );
 }

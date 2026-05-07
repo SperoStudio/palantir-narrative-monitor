@@ -24,7 +24,7 @@ const DEMO_SNAPSHOT = {
     favorable: [201, 210, 218, 225, 230, 238, 247],
     critical:  [84,  79,  77,  82,  80,  85,  89],
   },
-  audience_readiness: { generalPublic: 34, stakeholders: 58, policymakers: 67 },
+  audience_readiness: { generalPublic: 24, stakeholders: 48, policymakers: 57 },
   signals: [
     {
       sentiment: 'Favorable' as const,

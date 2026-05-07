@@ -23,12 +23,9 @@ export default function RedditDiscourse({ reddit }: Props) {
   const favorableCount = reddit.topThreads.filter(t => t.sentiment === 'Favorable').length;
 
   return (
-    <div
-      className="panel"
-      style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}
-    >
+    <div className="panel grid-reddit">
       {/* ── Header spanning all columns ── */}
-      <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="reddit-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>
             Public discourse
@@ -103,7 +100,7 @@ export default function RedditDiscourse({ reddit }: Props) {
       </div>
 
       {/* ── Cols 2–3: Top threads ── */}
-      <div style={{ gridColumn: '2 / -1' }}>
+      <div className="reddit-threads">
         <div style={{ fontSize: '11px', color: 'var(--text-3)', marginBottom: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
           Top threads
         </div>

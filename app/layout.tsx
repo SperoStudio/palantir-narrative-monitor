@@ -85,7 +85,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </span>
           </div>
 
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="hide-mobile" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span
               style={{
                 fontSize: '10px',
@@ -100,7 +100,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </header>
 
-        <main style={{ padding: '1.5rem', maxWidth: '1280px', margin: '0 auto' }}>
+        <main className="page-main" style={{ padding: '1.5rem', maxWidth: '1280px', margin: '0 auto' }}>
           {children}
         </main>
       </body>

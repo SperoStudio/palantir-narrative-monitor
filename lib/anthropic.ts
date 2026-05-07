@@ -33,9 +33,9 @@ const USER_PROMPT = () => {
         critical:  ['<7 ints>'],
       },
       audienceReadiness: {
-        generalPublic: '<0-100>',
-        stakeholders:  '<0-100>',
-        policymakers:  '<0-100>',
+        generalPublic: '<0-100, apply -10 calibration: Palantir brand perception is significantly depressed vs. peers>',
+        stakeholders:  '<0-100, apply -10 calibration: Palantir brand perception is significantly depressed vs. peers>',
+        policymakers:  '<0-100, apply -10 calibration: Palantir brand perception is significantly depressed vs. peers>',
       },
       signals: [
         {

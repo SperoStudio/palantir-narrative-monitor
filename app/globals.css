@@ -131,3 +131,42 @@ html, body {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 .spin { animation: spin 0.85s linear infinite; }
+
+/* ─── Responsive layout grids ─── */
+.grid-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.grid-chart-issues {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.grid-audience-signals {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.grid-reddit {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+}
+.reddit-header  { grid-column: 1 / -1; }
+.reddit-threads { grid-column: 2 / -1; }
+
+@media (max-width: 640px) {
+  .grid-metrics          { grid-template-columns: repeat(2, 1fr); }
+  .grid-chart-issues     { grid-template-columns: 1fr; }
+  .grid-audience-signals { grid-template-columns: 1fr; }
+  .grid-reddit           { grid-template-columns: 1fr; }
+  .reddit-threads        { grid-column: 1; }
+  .hide-mobile           { display: none !important; }
+  .page-main             { padding: 0.875rem !important; }
+  .dash-header           { flex-wrap: wrap; row-gap: 8px; }
+  .dash-header-right     { width: 100%; justify-content: space-between; }
+}

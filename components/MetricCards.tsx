@@ -21,14 +21,7 @@ export default function MetricCards({ snapshot }: Props) {
   const pct = Math.round((fc / Math.max(fc + hc, 1)) * 100);
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: '10px',
-        marginBottom: '14px',
-      }}
-    >
+    <div className="grid-metrics">
       {/* Narrative health */}
       <div className="card">
         <div className="label" style={{ marginBottom: '6px' }}>
