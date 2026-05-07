@@ -67,6 +67,63 @@ const DEMO_SNAPSHOT = {
       surgeWatch: false,
     },
   ],
+  reddit_sentiment: {
+    overallScore: 38,
+    postCount: 27,
+    commentVolume: 1842,
+    volumeSignal: 'Normal' as const,
+    topThreads: [
+      {
+        title:     'Palantir quietly expanded its ICE contract — here is what we know',
+        subreddit: 'privacy',
+        sentiment: 'Critical' as const,
+        engagement: 412,
+        url:       'https://reddit.com',
+      },
+      {
+        title:     'Is Palantir\'s healthcare AI actually saving lives or just selling a product?',
+        subreddit: 'technology',
+        sentiment: 'Neutral' as const,
+        engagement: 287,
+        url:       'https://reddit.com',
+      },
+      {
+        title:     'Palantir wins $480M Army contract extension for battlefield AI system',
+        subreddit: 'worldnews',
+        sentiment: 'Neutral' as const,
+        engagement: 203,
+        url:       'https://reddit.com',
+      },
+      {
+        title:     'Why does every AI ethics thread eventually come back to Palantir?',
+        subreddit: 'artificial',
+        sentiment: 'Critical' as const,
+        engagement: 178,
+        url:       'https://reddit.com',
+      },
+      {
+        title:     'Tampa General says Palantir AI cut sepsis deaths by 30% — peer review?',
+        subreddit: 'medicine',
+        sentiment: 'Favorable' as const,
+        engagement: 156,
+        url:       'https://reddit.com',
+      },
+      {
+        title:     'The surveillance state conversation we aren\'t having about Palantir',
+        subreddit: 'politics',
+        sentiment: 'Critical' as const,
+        engagement: 134,
+        url:       'https://reddit.com',
+      },
+    ],
+    issueBreakdown: [
+      { name: 'Healthcare AI',      mentions: 6,  sentiment: 58 },
+      { name: 'Defense / security', mentions: 8,  sentiment: 45 },
+      { name: 'Economic impact',    mentions: 3,  sentiment: 52 },
+      { name: 'AI regulation',      mentions: 5,  sentiment: 35 },
+      { name: 'Data privacy',       mentions: 11, sentiment: 22 },
+    ],
+  },
 };
 
 export default async function Home() {
