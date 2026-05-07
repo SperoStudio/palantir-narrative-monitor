@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/fetch-sentiment",
-      "schedule": "0 */4 * * *"
+      "schedule": "0 9 * * *"
     }
   ]
 }
