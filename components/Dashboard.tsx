@@ -15,28 +15,15 @@ interface Props {
 }
 
 export default function Dashboard({ snapshot, history }: Props) {
-  const [refreshError, setRefreshError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const updatedAt = new Date(snapshot.created_at).toLocaleTimeString('en-US', {
     hour: '2-digit', minute: '2-digit', timeZone: 'America/New_York',
   });
 
-  async function handleRefresh() {
+  function handleRefresh() {
     setIsRefreshing(true);
-    setRefreshError(null);
-    try {
-      const res = await fetch('/api/fetch-sentiment', { method: 'POST' });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `HTTP ${res.status}`);
-      }
-      window.location.reload();
-    } catch (err) {
-      setRefreshError(err instanceof Error ? err.message : 'Refresh failed');
-    } finally {
-      setIsRefreshing(false);
-    }
+    window.location.reload();
   }
 
   return (
@@ -61,7 +48,6 @@ export default function Dashboard({ snapshot, history }: Props) {
         </div>
 
         <div className="dash-header-right" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {refreshError && <span style={{ fontSize: '11px', color: 'var(--red)' }}>{refreshError}</span>}
           <span className="mono" style={{ fontSize: '10px', color: 'var(--text-3)' }}>Updated {updatedAt} EST</span>
           <button className="rbtn" onClick={handleRefresh} disabled={isRefreshing} aria-label="Refresh dashboard">
             <span style={{ fontSize: '12px' }} className={isRefreshing ? 'spin' : undefined}>↻</span>

@@ -1,0 +1,32 @@
+name: Fetch sentiment snapshot
+
+on:
+  # Daily at 9am UTC. Edit cron to change cadence — e.g. twice daily: '0 9,21 * * *'
+  schedule:
+    - cron: '0 9 * * *'
+
+  # Manual trigger: fire ad-hoc from the Actions tab via "Run workflow" button.
+  workflow_dispatch:
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Fetch and write snapshot
+        run: npx tsx scripts/fetch-snapshot.ts
+        env:
+          ANTHROPIC_API_KEY:             ${{ secrets.ANTHROPIC_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL:      ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY:     ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
