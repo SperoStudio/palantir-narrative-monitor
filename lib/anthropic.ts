@@ -59,7 +59,7 @@ export async function fetchSentimentFromClaude(): Promise<AnthropicPayload> {
 
   const response = await client.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 1500,
+    max_tokens: 3000,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     tools: [{ type: 'web_search_20250305', name: 'web_search' } as any],
     system: SYSTEM_PROMPT,
@@ -72,5 +72,11 @@ export async function fetchSentimentFromClaude(): Promise<AnthropicPayload> {
   const match = raw.match(/\{[\s\S]*\}/);
   if (!match) throw new Error('Claude response contained no JSON object');
 
-  return JSON.parse(match[0]) as AnthropicPayload;
+  try {
+    return JSON.parse(match[0]) as AnthropicPayload;
+  } catch {
+    // Strip trailing commas left by a truncated response and retry once
+    const cleaned = match[0].replace(/,\s*([}\]])/g, '$1');
+    return JSON.parse(cleaned) as AnthropicPayload;
+  }
 }
