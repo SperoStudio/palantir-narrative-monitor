@@ -69,7 +69,7 @@ export default function Dashboard({ snapshot, history }: Props) {
               textTransform: 'uppercase',
             }}
           >
-            Narrative environment monitor
+            Public sentiment monitor
           </span>
           <span
             style={{

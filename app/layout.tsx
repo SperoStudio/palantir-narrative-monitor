@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import { Inter } from 'next/font/google';
 import './globals.css';
 
@@ -9,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Narrative Environment Monitor — Palantir',
+  title: 'Public Sentiment Monitor — Palantir',
   description: 'Real-time narrative sentiment dashboard powered by Palantir · Spero Studio',
 };
 
@@ -28,17 +29,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             gap: '14px',
           }}
         >
-          <span
+          <Image
+            src="/spero-studio-logo.png"
+            alt="Spero Studio"
+            width={128}
+            height={30}
             style={{
-              fontWeight: 700,
-              fontSize: '13px',
-              letterSpacing: '0.06em',
-              color: 'var(--accent)',
-              textTransform: 'lowercase',
+              width: '112px',
+              height: 'auto',
+              display: 'block',
             }}
-          >
-            spero studio
-          </span>
+            priority
+          />
 
           <span
             style={{
@@ -52,36 +54,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
             <span
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                fontSize: '9.5px',
-                fontWeight: 600,
-                letterSpacing: '0.09em',
-                textTransform: 'uppercase',
-                color: 'var(--accent)',
-              }}
-            >
-              <span
-                style={{
-                  display: 'inline-block',
-                  width: '14px',
-                  height: '2px',
-                  background: 'var(--accent)',
-                  borderRadius: '1px',
-                }}
-              />
-              Client engagement
-            </span>
-            <span
-              style={{
                 fontSize: '12px',
                 fontWeight: 500,
                 color: 'var(--text)',
                 letterSpacing: '0.01em',
               }}
             >
-              Narrative Environment Monitor
+              Public Sentiment Monitor
             </span>
           </div>
 
