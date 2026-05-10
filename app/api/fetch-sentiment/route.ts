@@ -34,7 +34,10 @@ async function handler(_req: NextRequest) {
     const reddit = redditResult.status === 'fulfilled' ? redditResult.value : null;
 
     const db = supabaseServer();
-    const { error } = await db.from('sentiment_snapshots').insert({
+    // .select() forces PostgREST to return the inserted row, which surfaces
+    // errors that supabase-js v2 otherwise silently swallows on certain
+    // failure modes (RLS denials, missing columns, etc.).
+    const insertResult = await db.from('sentiment_snapshots').insert({
       narrative_health:   payload.narrativeHealth,
       favorable_count:    payload.favorableCount,
       hostile_count:      payload.hostileCount,
@@ -44,9 +47,12 @@ async function handler(_req: NextRequest) {
       audience_readiness: payload.audienceReadiness,
       signals:            payload.signals,
       reddit_sentiment:   reddit,
-    });
+    }).select();
 
-    if (error) throw new Error(error.message);
+    if (insertResult.error) throw new Error(insertResult.error.message);
+    if (!insertResult.data?.length) {
+      throw new Error('Insert returned no data — likely RLS denial or missing column. Check Supabase.');
+    }
 
     return NextResponse.json({ ok: true, narrativeHealth: payload.narrativeHealth });
   } catch (err) {
