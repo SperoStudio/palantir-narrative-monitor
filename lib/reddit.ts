@@ -1,13 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-// Subreddits that are primarily about stock trading — skipped because we
-// want public narrative sentiment, not investor sentiment.
-const FINANCIAL_SUBS = new Set([
-  'palantir', 'pltr', 'stocks', 'investing', 'wallstreetbets',
-  'options', 'stockmarket', 'finance', 'pennystocks', 'robinhood',
-  'thetagang', 'dividends', 'valueinvesting', 'etfs', 'algotrading',
-  'securityanalysis', 'personalfinance', 'financialindependence',
-]);
 
 export interface RedditPost {
   title: string;
@@ -39,21 +31,30 @@ export interface RedditSentiment {
   }[];
 }
 
-export async function fetchRedditPosts(): Promise<RedditPost[]> {
-  const queries = [
-    'palantir privacy',
-    'palantir surveillance',
-    'palantir ICE',
-    'palantir defense AI',
-    'palantir NHS',
-    'palantir healthcare AI',
-    'palantir data sharing',
-  ];
+// Non-financial subreddits where Palantir appears in narrative/policy context.
+// Searching within each directly (restrict_sr=true) guarantees we get posts
+// from these communities instead of filtering a global search that returns
+// mostly r/palantir and r/stocks.
+const TARGET_SUBS = [
+  'privacy',
+  'technology',
+  'politics',
+  'worldnews',
+  'news',
+  'netsec',
+  'artificial',
+  'medicine',
+  'healthcare',
+  'TrueReddit',
+  'europe',
+  'unitedkingdom',
+];
 
+export async function fetchRedditPosts(): Promise<RedditPost[]> {
   const results = await Promise.allSettled(
-    queries.map(async query => {
+    TARGET_SUBS.map(async sub => {
       const res = await fetch(
-        `https://www.reddit.com/search.json?q=${encodeURIComponent(query)}&sort=new&t=month&limit=25&type=link`,
+        `https://www.reddit.com/r/${sub}/search.json?q=palantir&sort=new&t=year&limit=25&type=link&restrict_sr=true`,
         {
           headers: {
             'User-Agent': 'PalantirNarrativeMonitor/1.0 (public narrative intelligence tool)',
@@ -63,7 +64,7 @@ export async function fetchRedditPosts(): Promise<RedditPost[]> {
       );
 
       if (!res.ok) {
-        throw new Error(`Reddit API returned ${res.status} for ${query}`);
+        throw new Error(`Reddit API returned ${res.status} for r/${sub}`);
       }
 
       const data = await res.json();
@@ -79,11 +80,11 @@ export async function fetchRedditPosts(): Promise<RedditPost[]> {
     })
   );
 
-  const posts = results.flatMap(result => (result.status === 'fulfilled' ? result.value : []));
-  const uniquePosts = Array.from(new Map(posts.map(post => [post.url, post])).values());
+  const posts = results.flatMap(r => (r.status === 'fulfilled' ? r.value : []));
+  console.log(`[reddit] fetched ${posts.length} posts across ${TARGET_SUBS.length} subreddits`);
 
-  // Remove financial/stock subreddits — we only want public opinion
-  return uniquePosts.filter(p => !FINANCIAL_SUBS.has(p.subreddit.toLowerCase()));
+  // De-duplicate by URL
+  return Array.from(new Map(posts.map(p => [p.url, p])).values());
 }
 
 export async function scoreRedditSentiment(posts: RedditPost[]): Promise<RedditSentiment> {
