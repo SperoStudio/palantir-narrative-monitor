@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 import type { SentimentSnapshot } from '@/lib/types';
 import MetricCards from './MetricCards';
 import SentimentChart from './SentimentChart';
@@ -8,7 +8,6 @@ import IssueAreas from './IssueAreas';
 import AudienceReadiness from './AudienceReadiness';
 import SignalFeed from './SignalFeed';
 import RedditDiscourse from './RedditDiscourse';
-import { useRouter } from 'next/navigation';
 
 interface Props {
   snapshot: SentimentSnapshot;
@@ -46,8 +45,6 @@ const EMPTY_SOCIAL_SNAPSHOT = {
 };
 
 export default function Dashboard({ snapshot, history }: Props) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
   const [refreshError, setRefreshError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isRefreshingSocial, setIsRefreshingSocial] = useState(false);
@@ -72,7 +69,7 @@ export default function Dashboard({ snapshot, history }: Props) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? `HTTP ${res.status}`);
       }
-      startTransition(() => router.refresh());
+      window.location.reload();
     } catch (err) {
       setRefreshError(err instanceof Error ? err.message : 'Refresh failed');
     } finally {
@@ -134,16 +131,16 @@ export default function Dashboard({ snapshot, history }: Props) {
           <button
             className="rbtn"
             onClick={() => handleRefresh(false)}
-            disabled={isRefreshing || isPending}
+            disabled={isRefreshing}
             aria-label="Refresh dashboard"
           >
             <span
               style={{ fontSize: '12px' }}
-              className={isRefreshing || isPending ? 'spin' : undefined}
+              className={isRefreshing ? 'spin' : undefined}
             >
               ↻
             </span>
-            {isRefreshing || isPending ? 'Refreshing…' : 'Refresh'}
+            {isRefreshing ? 'Refreshing…' : 'Refresh'}
           </button>
         </div>
       </div>
