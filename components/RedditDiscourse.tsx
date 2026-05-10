@@ -14,9 +14,17 @@ function volumeBadge(signal: 'Spike' | 'Normal' | 'Quiet') {
 
 interface Props {
   reddit: RedditSentiment;
+  variant?: 'full' | 'scores' | 'posts';
+  onRefreshSocial?: () => void;
+  isRefreshingSocial?: boolean;
 }
 
-export default function RedditDiscourse({ reddit }: Props) {
+export default function RedditDiscourse({
+  reddit,
+  variant = 'full',
+  onRefreshSocial,
+  isRefreshingSocial = false,
+}: Props) {
   const badge = volumeBadge(reddit.volumeSignal);
   const platformBreakdown = reddit.platformBreakdown ?? [
     {
@@ -36,11 +44,16 @@ export default function RedditDiscourse({ reddit }: Props) {
   const criticalCount  = reddit.topThreads.filter(t => t.sentiment === 'Critical').length;
   const favorableCount = reddit.topThreads.filter(t => t.sentiment === 'Favorable').length;
   const hasSocialData = reddit.postCount > 0 || (reddit.xMentionCount ?? 0) > 0 || reddit.topThreads.length > 0;
+  const showScores = variant === 'full' || variant === 'scores';
+  const showPosts = variant === 'full' || variant === 'posts';
 
   return (
-    <div className="panel grid-reddit">
+    <div className={variant === 'full' ? 'panel grid-reddit' : 'panel'}>
       {/* ── Header spanning all columns ── */}
-      <div className="reddit-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+      <div
+        className={variant === 'full' ? 'reddit-header' : undefined}
+        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: variant === 'full' ? 0 : '14px' }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>
             Social media snapshot
@@ -66,90 +79,110 @@ export default function RedditDiscourse({ reddit }: Props) {
               ? `${reddit.postCount} reddit posts · ${(reddit.xMentionCount ?? 0).toLocaleString()} X/public mentions`
               : 'Pending next refresh'}
           </span>
+          {onRefreshSocial && (
+            <button
+              type="button"
+              className="rbtn"
+              onClick={onRefreshSocial}
+              disabled={isRefreshingSocial}
+              aria-label="Refresh social media snapshot"
+            >
+              <span
+                style={{ fontSize: '12px' }}
+                className={isRefreshingSocial ? 'spin' : undefined}
+              >
+                ↻
+              </span>
+              {isRefreshingSocial ? 'Social…' : 'Refresh social'}
+            </button>
+          )}
         </div>
       </div>
 
       {/* ── Col 1: Overall sentiment score ── */}
-      <div>
-        <div style={{ fontSize: '11px', color: 'var(--text-3)', marginBottom: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-          Public sentiment
-        </div>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '8px' }}>
-          <span
-            style={{
-              fontSize: '38px',
-              fontWeight: 700,
-              lineHeight: 1,
-              color: sentColor(reddit.overallScore),
-            }}
-          >
-            {reddit.overallScore}
-          </span>
-          <span style={{ fontSize: '14px', color: 'var(--text-3)' }}>/100</span>
-        </div>
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-          {hasSocialData ? (
-            <>
-              <span style={{ fontSize: '11px', color: 'var(--sent-favorable)', background: 'var(--sent-favorable-bg)', padding: '2px 7px', borderRadius: '5px', fontWeight: 600 }}>
-                {favorableCount} favorable
-              </span>
-              <span style={{ fontSize: '11px', color: 'var(--sent-critical)', background: 'var(--sent-critical-bg)', padding: '2px 7px', borderRadius: '5px', fontWeight: 600 }}>
-                {criticalCount} critical
-              </span>
-            </>
-          ) : (
-            <span style={{ fontSize: '11px', color: 'var(--text-3)', background: 'var(--bg-2)', padding: '2px 7px', borderRadius: '5px', fontWeight: 600 }}>
-              Run refresh to collect social posts
+      {showScores && (
+        <div>
+          <div style={{ fontSize: '11px', color: 'var(--text-3)', marginBottom: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Public sentiment
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '8px' }}>
+            <span
+              style={{
+                fontSize: '38px',
+                fontWeight: 700,
+                lineHeight: 1,
+                color: sentColor(reddit.overallScore),
+              }}
+            >
+              {reddit.overallScore}
             </span>
-          )}
-        </div>
+            <span style={{ fontSize: '14px', color: 'var(--text-3)' }}>/100</span>
+          </div>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            {hasSocialData ? (
+              <>
+                <span style={{ fontSize: '11px', color: 'var(--sent-favorable)', background: 'var(--sent-favorable-bg)', padding: '2px 7px', borderRadius: '5px', fontWeight: 600 }}>
+                  {favorableCount} favorable
+                </span>
+                <span style={{ fontSize: '11px', color: 'var(--sent-critical)', background: 'var(--sent-critical-bg)', padding: '2px 7px', borderRadius: '5px', fontWeight: 600 }}>
+                  {criticalCount} critical
+                </span>
+              </>
+            ) : (
+              <span style={{ fontSize: '11px', color: 'var(--text-3)', background: 'var(--bg-2)', padding: '2px 7px', borderRadius: '5px', fontWeight: 600 }}>
+                Social snapshot updates on full scheduled runs
+              </span>
+            )}
+          </div>
 
-        <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {platformBreakdown.map(platform => (
-            <div key={platform.platform}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '2px' }}>
-                <span style={{ color: 'var(--text-2)' }}>{platform.platform}</span>
-                <span style={{ color: sentColor(platform.sentiment), fontWeight: 600 }}>
-                  {platform.sentiment}
-                  <span style={{ fontWeight: 400, color: 'var(--text-3)', marginLeft: '3px' }}>
-                    · {platform.coverage}
+          <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {platformBreakdown.map(platform => (
+              <div key={platform.platform}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '2px' }}>
+                  <span style={{ color: 'var(--text-2)' }}>{platform.platform}</span>
+                  <span style={{ color: sentColor(platform.sentiment), fontWeight: 600 }}>
+                    {platform.sentiment}
+                    <span style={{ fontWeight: 400, color: 'var(--text-3)', marginLeft: '3px' }}>
+                      · {platform.coverage}
+                    </span>
                   </span>
-                </span>
+                </div>
+                <div className="pbar">
+                  <div
+                    className="pfill"
+                    style={{ width: `${platform.sentiment}%`, background: sentColor(platform.sentiment) }}
+                  />
+                </div>
               </div>
-              <div className="pbar">
-                <div
-                  className="pfill"
-                  style={{ width: `${platform.sentiment}%`, background: sentColor(platform.sentiment) }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        {/* Issue breakdown */}
-        <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '9px' }}>
-          {reddit.issueBreakdown.map(area => (
-            <div key={area.name}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '2px' }}>
-                <span style={{ color: 'var(--text-2)' }}>{area.name}</span>
-                <span style={{ color: sentColor(area.sentiment), fontWeight: 600 }}>
-                  {area.mentions}
-                  <span style={{ fontWeight: 400, color: 'var(--text-3)', marginLeft: '3px' }}>mentions</span>
-                </span>
+          {/* Issue breakdown */}
+          <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '9px' }}>
+            {reddit.issueBreakdown.map(area => (
+              <div key={area.name}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '2px' }}>
+                  <span style={{ color: 'var(--text-2)' }}>{area.name}</span>
+                  <span style={{ color: sentColor(area.sentiment), fontWeight: 600 }}>
+                    {area.mentions}
+                    <span style={{ fontWeight: 400, color: 'var(--text-3)', marginLeft: '3px' }}>mentions</span>
+                  </span>
+                </div>
+                <div className="pbar">
+                  <div
+                    className="pfill"
+                    style={{ width: `${area.sentiment}%`, background: sentColor(area.sentiment) }}
+                  />
+                </div>
               </div>
-              <div className="pbar">
-                <div
-                  className="pfill"
-                  style={{ width: `${area.sentiment}%`, background: sentColor(area.sentiment) }}
-                />
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── Cols 2–3: Top threads ── */}
-      <div className="reddit-threads">
+      {showPosts && (
+      <div className={variant === 'full' ? 'reddit-threads' : undefined}>
         <div style={{ fontSize: '11px', color: 'var(--text-3)', marginBottom: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
           Representative social posts
         </div>
@@ -164,8 +197,8 @@ export default function RedditDiscourse({ reddit }: Props) {
               lineHeight: 1.5,
             }}
           >
-            Social media collection has not run for the latest snapshot yet. Click Refresh to pull
-            Reddit discourse and limited public-web X mentions.
+            Social media collection has not run for the latest snapshot yet. Use Refresh social to
+            pull Reddit discourse and limited public-web X mentions.
           </div>
         )}
         <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -234,6 +267,7 @@ export default function RedditDiscourse({ reddit }: Props) {
           })}
         </div>
       </div>
+      )}
     </div>
   );
 }

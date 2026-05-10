@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import type { Signal } from '@/lib/types';
 
 interface Props {
@@ -29,7 +32,9 @@ function signalTime(signal: Signal) {
 }
 
 export default function SignalFeed({ signals, label = 'Last 24 hours' }: Props) {
+  const [view, setView] = useState<'recent' | 'all'>('recent');
   const orderedSignals = [...signals].sort((a, b) => signalTime(b) - signalTime(a));
+  const visibleSignals = view === 'recent' ? orderedSignals.slice(0, 10) : orderedSignals;
 
   return (
     <div className="panel">
@@ -39,16 +44,55 @@ export default function SignalFeed({ signals, label = 'Last 24 hours' }: Props) 
           justifyContent: 'space-between',
           alignItems: 'center',
           marginBottom: '10px',
+          gap: '10px',
+          flexWrap: 'wrap',
         }}
       >
         <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>
           Live signal feed
         </span>
-        <span className="mono label">{label}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span className="mono label">{label}</span>
+          {orderedSignals.length > 10 && (
+            <div
+              style={{
+                display: 'flex',
+                border: '1px solid var(--border)',
+                borderRadius: '6px',
+                overflow: 'hidden',
+              }}
+            >
+              {(['recent', 'all'] as const).map(option => {
+                const active = view === option;
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setView(option)}
+                    style={{
+                      border: 0,
+                      borderRight: option === 'recent' ? '1px solid var(--border)' : 0,
+                      background: active ? 'var(--accent-muted)' : 'transparent',
+                      color: active ? 'var(--accent)' : 'var(--text-3)',
+                      cursor: 'pointer',
+                      fontSize: '10px',
+                      fontWeight: 600,
+                      padding: '3px 8px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                    }}
+                  >
+                    {option === 'recent' ? 'Top 10' : 'All'}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column' }}>
-        {orderedSignals.map((s, i) => {
+        {visibleSignals.map((s, i) => {
           const isFav  = s.sentiment === 'Favorable';
           const isCrit = s.sentiment === 'Critical';
 
@@ -69,7 +113,7 @@ export default function SignalFeed({ signals, label = 'Last 24 hours' }: Props) 
               className="sig"
               style={{
                 padding: '9px 0',
-                borderBottom: i < orderedSignals.length - 1 ? '1px solid var(--border)' : 'none',
+                borderBottom: i < visibleSignals.length - 1 ? '1px solid var(--border)' : 'none',
                 display: 'flex',
                 gap: '10px',
                 alignItems: 'flex-start',

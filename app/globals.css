@@ -151,6 +151,11 @@ html, body {
   gap: 12px;
   margin-bottom: 12px;
 }
+.audience-social-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 .grid-reddit {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
