@@ -50,59 +50,54 @@ export interface RedditSentiment {
 }
 
 export async function fetchRedditPosts(): Promise<RedditPost[]> {
-  const res = await fetch(
-    'https://www.reddit.com/search.json?q=palantir&sort=new&t=week&limit=100&type=link',
-    {
-      headers: {
-        'User-Agent': 'PalantirNarrativeMonitor/1.0 (narrative intelligence tool)',
-      },
-      cache: 'no-store',
-    }
+  const queries = [
+    'palantir privacy',
+    'palantir surveillance',
+    'palantir ICE',
+    'palantir defense AI',
+    'palantir NHS',
+    'palantir healthcare AI',
+    'palantir data sharing',
+  ];
+
+  const results = await Promise.allSettled(
+    queries.map(async query => {
+      const res = await fetch(
+        `https://www.reddit.com/search.json?q=${encodeURIComponent(query)}&sort=new&t=month&limit=25&type=link`,
+        {
+          headers: {
+            'User-Agent': 'PalantirNarrativeMonitor/1.0 (public narrative intelligence tool)',
+          },
+          cache: 'no-store',
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error(`Reddit API returned ${res.status} for ${query}`);
+      }
+
+      const data = await res.json();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return data.data.children.map((child: any) => ({
+        title: child.data.title,
+        subreddit: child.data.subreddit,
+        score: child.data.score,
+        numComments: child.data.num_comments,
+        url: `https://reddit.com${child.data.permalink}`,
+        createdUtc: child.data.created_utc,
+      })) as RedditPost[];
+    })
   );
 
-  if (!res.ok) {
-    throw new Error(`Reddit API returned ${res.status}`);
-  }
-
-  const data = await res.json();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const posts: RedditPost[] = data.data.children.map((child: any) => ({
-    title: child.data.title,
-    subreddit: child.data.subreddit,
-    score: child.data.score,
-    numComments: child.data.num_comments,
-    url: `https://reddit.com${child.data.permalink}`,
-    createdUtc: child.data.created_utc,
-  }));
+  const posts = results.flatMap(result => (result.status === 'fulfilled' ? result.value : []));
+  const uniquePosts = Array.from(new Map(posts.map(post => [post.url, post])).values());
 
   // Remove financial/stock subreddits — we only want public opinion
-  return posts.filter(p => !FINANCIAL_SUBS.has(p.subreddit.toLowerCase()));
+  return uniquePosts.filter(p => !FINANCIAL_SUBS.has(p.subreddit.toLowerCase()));
 }
 
 export async function scoreRedditSentiment(posts: RedditPost[]): Promise<RedditSentiment> {
   const commentVolume = posts.reduce((sum, p) => sum + p.numComments, 0);
-
-  if (posts.length === 0) {
-    return {
-      overallScore: 50,
-      postCount: 0,
-      commentVolume: 0,
-      volumeSignal: 'Quiet',
-      xMentionCount: 0,
-      platformBreakdown: [
-        { platform: 'Reddit', sentiment: 50, volume: 0, coverage: 'Measured' },
-        { platform: 'X / Public Web', sentiment: 50, volume: 0, coverage: 'Limited public web' },
-      ],
-      topThreads: [],
-      issueBreakdown: [
-        { name: 'Healthcare AI',      mentions: 0, sentiment: 50 },
-        { name: 'Defense / security', mentions: 0, sentiment: 50 },
-        { name: 'Economic impact',    mentions: 0, sentiment: 50 },
-        { name: 'AI regulation',      mentions: 0, sentiment: 50 },
-        { name: 'Data privacy',       mentions: 0, sentiment: 50 },
-      ],
-    };
-  }
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -112,12 +107,13 @@ export async function scoreRedditSentiment(posts: RedditPost[]): Promise<RedditS
       p =>
         `[r/${p.subreddit}] ${p.title} — ${p.score} upvotes, ${p.numComments} comments — ${p.url}`
     )
-    .join('\n');
+    .join('\n') || 'No usable non-financial Reddit posts were found from public Reddit search.';
 
   const prompt =
     'You are a public-opinion analyst. Analyze public social-media narrative sentiment about Palantir Technologies, not investor sentiment. ' +
     'Use the Reddit posts below as measured public-discourse inputs from non-financial communities. ' +
     'Also use web search to find representative, publicly indexed X/Twitter posts or public-web references to X discourse about Palantir across privacy, ICE/immigration, defense AI, healthcare AI, NHS, government data sharing, and AI regulation. ' +
+    'If Reddit is sparse, still produce a useful X / Public Web snapshot from publicly indexed sources. ' +
     'Exclude stock-price, earnings, trading, and $PLTR investor chatter. Treat X as limited public-web coverage, not complete platform coverage.\n\n' +
     'Posts:\n' +
     postsText +

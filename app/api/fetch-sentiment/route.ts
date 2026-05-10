@@ -12,9 +12,40 @@ async function handler(_req: NextRequest) {
   try {
     const includeSocial =
       _req.method === 'GET' || _req.nextUrl.searchParams.get('social') === '1';
+    const socialOnly =
+      _req.method === 'POST' && _req.nextUrl.searchParams.get('social') === '1';
+
+    const db = supabaseServer();
+
+    if (socialOnly) {
+      const reddit = await fetchRedditPosts().then(posts => scoreRedditSentiment(posts));
+      const { data: latest, error: latestError } = await db
+        .from('sentiment_snapshots')
+        .select('id')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (latestError) throw new Error(latestError.message);
+      if (!latest?.id) throw new Error('No sentiment snapshot exists to attach social data to');
+
+      const { error } = await db
+        .from('sentiment_snapshots')
+        .update({ reddit_sentiment: reddit })
+        .eq('id', latest.id);
+
+      if (error) throw new Error(error.message);
+
+      return NextResponse.json({
+        ok: true,
+        socialOnly: true,
+        socialIncluded: true,
+        postCount: reddit.postCount,
+        xMentionCount: reddit.xMentionCount ?? 0,
+      });
+    }
 
     const payload = await fetchSentimentFromClaude();
-    const db = supabaseServer();
     let reddit = null;
 
     if (includeSocial) {
