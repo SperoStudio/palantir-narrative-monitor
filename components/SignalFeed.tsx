@@ -5,7 +5,32 @@ interface Props {
   label?: string;
 }
 
+function timeAgoToMs(timeAgo: string) {
+  const match = timeAgo.toLowerCase().match(/(\d+)\s*(m|min|minute|minutes|h|hr|hour|hours|d|day|days)/);
+  if (!match) return Number.MAX_SAFE_INTEGER;
+
+  const value = Number(match[1]);
+  const unit = match[2];
+
+  if (unit.startsWith('m')) return value * 60 * 1000;
+  if (unit.startsWith('h')) return value * 60 * 60 * 1000;
+  if (unit.startsWith('d')) return value * 24 * 60 * 60 * 1000;
+
+  return Number.MAX_SAFE_INTEGER;
+}
+
+function signalTime(signal: Signal) {
+  if (signal.publishedAt) {
+    const parsed = new Date(signal.publishedAt).getTime();
+    if (!Number.isNaN(parsed)) return parsed;
+  }
+
+  return Date.now() - timeAgoToMs(signal.timeAgo);
+}
+
 export default function SignalFeed({ signals, label = 'Last 24 hours' }: Props) {
+  const orderedSignals = [...signals].sort((a, b) => signalTime(b) - signalTime(a));
+
   return (
     <div className="panel">
       <div
@@ -23,7 +48,7 @@ export default function SignalFeed({ signals, label = 'Last 24 hours' }: Props) 
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column' }}>
-        {signals.map((s, i) => {
+        {orderedSignals.map((s, i) => {
           const isFav  = s.sentiment === 'Favorable';
           const isCrit = s.sentiment === 'Critical';
 
@@ -44,7 +69,7 @@ export default function SignalFeed({ signals, label = 'Last 24 hours' }: Props) 
               className="sig"
               style={{
                 padding: '9px 0',
-                borderBottom: i < signals.length - 1 ? '1px solid var(--border)' : 'none',
+                borderBottom: i < orderedSignals.length - 1 ? '1px solid var(--border)' : 'none',
                 display: 'flex',
                 gap: '10px',
                 alignItems: 'flex-start',

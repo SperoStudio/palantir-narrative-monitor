@@ -20,6 +20,7 @@ export interface Signal {
   sentiment: 'Favorable' | 'Critical' | 'Neutral';
   headline: string;
   source: string;
+  publishedAt?: string;
   timeAgo: string;
   issueArea: string;
   surgeWatch: boolean;

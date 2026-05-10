@@ -14,6 +14,8 @@ const USER_PROMPT = () => {
     `Search for recent Palantir Technologies news (as of ${d}) across: ` +
     'healthcare AI, defense/military contracts, economic impact and jobs, ' +
     'AI regulation, data privacy criticism, and any breaking news today. ' +
+    'For every signal, include publishedAt as the original article publication timestamp in ISO 8601 format. ' +
+    'Sort signals newest to oldest by publishedAt. ' +
     'Return ONLY this JSON object (no backticks, no markdown, no prose):\n' +
     JSON.stringify({
       narrativeHealth: '<0-100>',
@@ -42,6 +44,7 @@ const USER_PROMPT = () => {
           sentiment:  'Favorable or Critical or Neutral',
           headline:   '<real headline>',
           source:     '<publication>',
+          publishedAt: '<ISO timestamp, e.g. 2026-05-10T14:32:00Z>',
           timeAgo:    '<Xh ago>',
           issueArea:  '<area>',
           surgeWatch: '<bool>',
