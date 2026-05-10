@@ -18,6 +18,20 @@ interface Props {
 
 export default function RedditDiscourse({ reddit }: Props) {
   const badge = volumeBadge(reddit.volumeSignal);
+  const platformBreakdown = reddit.platformBreakdown ?? [
+    {
+      platform: 'Reddit' as const,
+      sentiment: reddit.overallScore,
+      volume: reddit.postCount,
+      coverage: 'Measured' as const,
+    },
+    {
+      platform: 'X / Public Web' as const,
+      sentiment: 50,
+      volume: reddit.xMentionCount ?? 0,
+      coverage: 'Limited public web' as const,
+    },
+  ];
 
   const criticalCount  = reddit.topThreads.filter(t => t.sentiment === 'Critical').length;
   const favorableCount = reddit.topThreads.filter(t => t.sentiment === 'Favorable').length;
@@ -28,9 +42,9 @@ export default function RedditDiscourse({ reddit }: Props) {
       <div className="reddit-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>
-            Public discourse
+            Social media snapshot
           </span>
-          <span className="mono label">Reddit · past 7 days · non-financial</span>
+          <span className="mono label">Reddit measured · X limited public web · non-financial</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span
@@ -46,7 +60,9 @@ export default function RedditDiscourse({ reddit }: Props) {
           >
             {badge.label}
           </span>
-          <span className="mono label">{reddit.postCount} posts · {reddit.commentVolume.toLocaleString()} comments</span>
+          <span className="mono label">
+            {reddit.postCount} reddit posts · {(reddit.xMentionCount ?? 0).toLocaleString()} X/public mentions
+          </span>
         </div>
       </div>
 
@@ -77,6 +93,28 @@ export default function RedditDiscourse({ reddit }: Props) {
           </span>
         </div>
 
+        <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {platformBreakdown.map(platform => (
+            <div key={platform.platform}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '2px' }}>
+                <span style={{ color: 'var(--text-2)' }}>{platform.platform}</span>
+                <span style={{ color: sentColor(platform.sentiment), fontWeight: 600 }}>
+                  {platform.sentiment}
+                  <span style={{ fontWeight: 400, color: 'var(--text-3)', marginLeft: '3px' }}>
+                    · {platform.coverage}
+                  </span>
+                </span>
+              </div>
+              <div className="pbar">
+                <div
+                  className="pfill"
+                  style={{ width: `${platform.sentiment}%`, background: sentColor(platform.sentiment) }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+
         {/* Issue breakdown */}
         <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '9px' }}>
           {reddit.issueBreakdown.map(area => (
@@ -102,7 +140,7 @@ export default function RedditDiscourse({ reddit }: Props) {
       {/* ── Cols 2–3: Top threads ── */}
       <div className="reddit-threads">
         <div style={{ fontSize: '11px', color: 'var(--text-3)', marginBottom: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-          Top threads
+          Representative social posts
         </div>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {reddit.topThreads.slice(0, 6).map((thread, i) => {
@@ -160,7 +198,9 @@ export default function RedditDiscourse({ reddit }: Props) {
                     {thread.title}
                   </a>
                   <div className="mono" style={{ fontSize: '10px', color: 'var(--text-3)', marginTop: '2px' }}>
-                    r/{thread.subreddit} · {thread.engagement.toLocaleString()} engagement
+                    {thread.platform === 'X / Public Web'
+                      ? `${thread.source ?? 'X / public web'} · ${thread.coverage ?? 'Limited public web'}`
+                      : `r/${thread.subreddit ?? thread.source ?? 'reddit'} · ${thread.engagement.toLocaleString()} engagement`}
                   </div>
                 </div>
               </div>

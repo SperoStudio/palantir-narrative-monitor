@@ -20,10 +20,13 @@ export interface RedditPost {
 
 export interface RedditThread {
   title: string;
-  subreddit: string;
+  platform?: 'Reddit' | 'X / Public Web';
+  source?: string;
+  subreddit?: string;
   sentiment: 'Favorable' | 'Critical' | 'Neutral';
   engagement: number;
   url: string;
+  coverage?: 'Measured' | 'Limited public web';
 }
 
 export interface RedditSentiment {
@@ -31,6 +34,13 @@ export interface RedditSentiment {
   postCount: number;
   commentVolume: number;
   volumeSignal: 'Spike' | 'Normal' | 'Quiet';
+  xMentionCount?: number;
+  platformBreakdown?: {
+    platform: 'Reddit' | 'X / Public Web';
+    sentiment: number;
+    volume: number;
+    coverage: 'Measured' | 'Limited public web';
+  }[];
   topThreads: RedditThread[];
   issueBreakdown: {
     name: string;
@@ -78,6 +88,11 @@ export async function scoreRedditSentiment(posts: RedditPost[]): Promise<RedditS
       postCount: 0,
       commentVolume: 0,
       volumeSignal: 'Quiet',
+      xMentionCount: 0,
+      platformBreakdown: [
+        { platform: 'Reddit', sentiment: 50, volume: 0, coverage: 'Measured' },
+        { platform: 'X / Public Web', sentiment: 50, volume: 0, coverage: 'Limited public web' },
+      ],
       topThreads: [],
       issueBreakdown: [
         { name: 'Healthcare AI',      mentions: 0, sentiment: 50 },
@@ -100,9 +115,10 @@ export async function scoreRedditSentiment(posts: RedditPost[]): Promise<RedditS
     .join('\n');
 
   const prompt =
-    'You are a public-opinion analyst. The posts below are from Reddit about Palantir Technologies ' +
-    '— sourced from non-financial communities (technology, privacy, politics, worldnews, etc.) ' +
-    'from the past week. Analyze public narrative sentiment, not investor sentiment.\n\n' +
+    'You are a public-opinion analyst. Analyze public social-media narrative sentiment about Palantir Technologies, not investor sentiment. ' +
+    'Use the Reddit posts below as measured public-discourse inputs from non-financial communities. ' +
+    'Also use web search to find representative, publicly indexed X/Twitter posts or public-web references to X discourse about Palantir across privacy, ICE/immigration, defense AI, healthcare AI, NHS, government data sharing, and AI regulation. ' +
+    'Exclude stock-price, earnings, trading, and $PLTR investor chatter. Treat X as limited public-web coverage, not complete platform coverage.\n\n' +
     'Posts:\n' +
     postsText +
     '\n\nReturn ONLY this JSON object (no backticks, no markdown, no prose):\n' +
@@ -111,13 +127,31 @@ export async function scoreRedditSentiment(posts: RedditPost[]): Promise<RedditS
       postCount: posts.length,
       commentVolume,
       volumeSignal: 'Spike or Normal or Quiet',
+      xMentionCount: '<number of representative X/public-web mentions found; 0 if none>',
+      platformBreakdown: [
+        {
+          platform: 'Reddit',
+          sentiment: '<0-100>',
+          volume: posts.length,
+          coverage: 'Measured',
+        },
+        {
+          platform: 'X / Public Web',
+          sentiment: '<0-100>',
+          volume: '<representative public-web mention count; do not imply firehose coverage>',
+          coverage: 'Limited public web',
+        },
+      ],
       topThreads: [
         {
-          title: '<post title, max 80 chars>',
-          subreddit: '<subreddit name>',
+          platform: 'Reddit or X / Public Web',
+          source: '<subreddit name, X handle, or publication/reference source>',
+          subreddit: '<subreddit name when platform is Reddit; otherwise omit or empty string>',
+          title: '<post title, post paraphrase, or public-web X discourse summary, max 100 chars>',
           sentiment: 'Favorable or Critical or Neutral',
-          engagement: '<score + numComments as integer>',
-          url: '<full reddit url>',
+          engagement: '<score + numComments for Reddit, or visible engagement/0 for X public-web>',
+          url: '<full source url>',
+          coverage: 'Measured or Limited public web',
         },
       ],
       issueBreakdown: [
@@ -131,11 +165,14 @@ export async function scoreRedditSentiment(posts: RedditPost[]): Promise<RedditS
 
   const response = await client.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 1500,
+    max_tokens: 2200,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    tools: [{ type: 'web_search_20250305', name: 'web_search' } as any],
     messages: [{ role: 'user', content: prompt }],
   });
 
-  const text = (response.content[0] as { type: 'text'; text: string })?.text ?? '';
+  const textBlocks = response.content.filter((b) => b.type === 'text');
+  const text = (textBlocks[textBlocks.length - 1] as { type: 'text'; text: string })?.text ?? '';
   const match = text.match(/\{[\s\S]*\}/);
   if (!match) throw new Error('Reddit sentiment response contained no JSON');
 

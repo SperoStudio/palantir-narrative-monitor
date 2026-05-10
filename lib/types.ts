@@ -28,10 +28,13 @@ export interface Signal {
 
 export interface RedditThread {
   title: string;
-  subreddit: string;
+  platform?: 'Reddit' | 'X / Public Web';
+  source?: string;
+  subreddit?: string;
   sentiment: 'Favorable' | 'Critical' | 'Neutral';
   engagement: number;
   url: string;
+  coverage?: 'Measured' | 'Limited public web';
 }
 
 export interface RedditSentiment {
@@ -39,6 +42,13 @@ export interface RedditSentiment {
   postCount: number;
   commentVolume: number;
   volumeSignal: 'Spike' | 'Normal' | 'Quiet';
+  xMentionCount?: number;
+  platformBreakdown?: {
+    platform: 'Reddit' | 'X / Public Web';
+    sentiment: number;
+    volume: number;
+    coverage: 'Measured' | 'Limited public web';
+  }[];
   topThreads: RedditThread[];
   issueBreakdown: {
     name: string;
