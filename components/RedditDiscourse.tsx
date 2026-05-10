@@ -35,6 +35,7 @@ export default function RedditDiscourse({ reddit }: Props) {
 
   const criticalCount  = reddit.topThreads.filter(t => t.sentiment === 'Critical').length;
   const favorableCount = reddit.topThreads.filter(t => t.sentiment === 'Favorable').length;
+  const hasSocialData = reddit.postCount > 0 || (reddit.xMentionCount ?? 0) > 0 || reddit.topThreads.length > 0;
 
   return (
     <div className="panel grid-reddit">
@@ -61,7 +62,9 @@ export default function RedditDiscourse({ reddit }: Props) {
             {badge.label}
           </span>
           <span className="mono label">
-            {reddit.postCount} reddit posts · {(reddit.xMentionCount ?? 0).toLocaleString()} X/public mentions
+            {hasSocialData
+              ? `${reddit.postCount} reddit posts · ${(reddit.xMentionCount ?? 0).toLocaleString()} X/public mentions`
+              : 'Pending next refresh'}
           </span>
         </div>
       </div>
@@ -85,12 +88,20 @@ export default function RedditDiscourse({ reddit }: Props) {
           <span style={{ fontSize: '14px', color: 'var(--text-3)' }}>/100</span>
         </div>
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '11px', color: 'var(--sent-favorable)', background: 'var(--sent-favorable-bg)', padding: '2px 7px', borderRadius: '5px', fontWeight: 600 }}>
-            {favorableCount} favorable
-          </span>
-          <span style={{ fontSize: '11px', color: 'var(--sent-critical)', background: 'var(--sent-critical-bg)', padding: '2px 7px', borderRadius: '5px', fontWeight: 600 }}>
-            {criticalCount} critical
-          </span>
+          {hasSocialData ? (
+            <>
+              <span style={{ fontSize: '11px', color: 'var(--sent-favorable)', background: 'var(--sent-favorable-bg)', padding: '2px 7px', borderRadius: '5px', fontWeight: 600 }}>
+                {favorableCount} favorable
+              </span>
+              <span style={{ fontSize: '11px', color: 'var(--sent-critical)', background: 'var(--sent-critical-bg)', padding: '2px 7px', borderRadius: '5px', fontWeight: 600 }}>
+                {criticalCount} critical
+              </span>
+            </>
+          ) : (
+            <span style={{ fontSize: '11px', color: 'var(--text-3)', background: 'var(--bg-2)', padding: '2px 7px', borderRadius: '5px', fontWeight: 600 }}>
+              Run refresh to collect social posts
+            </span>
+          )}
         </div>
 
         <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -142,6 +153,21 @@ export default function RedditDiscourse({ reddit }: Props) {
         <div style={{ fontSize: '11px', color: 'var(--text-3)', marginBottom: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
           Representative social posts
         </div>
+        {!hasSocialData && (
+          <div
+            style={{
+              border: '1px dashed var(--border-2)',
+              borderRadius: '8px',
+              padding: '16px',
+              color: 'var(--text-3)',
+              fontSize: '12px',
+              lineHeight: 1.5,
+            }}
+          >
+            Social media collection has not run for the latest snapshot yet. Click Refresh to pull
+            Reddit discourse and limited public-web X mentions.
+          </div>
+        )}
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {reddit.topThreads.slice(0, 6).map((thread, i) => {
             const isFav  = thread.sentiment === 'Favorable';

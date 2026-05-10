@@ -15,6 +15,36 @@ interface Props {
   history: SentimentSnapshot[];
 }
 
+const EMPTY_SOCIAL_SNAPSHOT = {
+  overallScore: 50,
+  postCount: 0,
+  commentVolume: 0,
+  volumeSignal: 'Quiet' as const,
+  xMentionCount: 0,
+  platformBreakdown: [
+    {
+      platform: 'Reddit' as const,
+      sentiment: 50,
+      volume: 0,
+      coverage: 'Measured' as const,
+    },
+    {
+      platform: 'X / Public Web' as const,
+      sentiment: 50,
+      volume: 0,
+      coverage: 'Limited public web' as const,
+    },
+  ],
+  topThreads: [],
+  issueBreakdown: [
+    { name: 'Healthcare AI',      mentions: 0, sentiment: 50 },
+    { name: 'Defense / security', mentions: 0, sentiment: 50 },
+    { name: 'Economic impact',    mentions: 0, sentiment: 50 },
+    { name: 'AI regulation',      mentions: 0, sentiment: 50 },
+    { name: 'Data privacy',       mentions: 0, sentiment: 50 },
+  ],
+};
+
 export default function Dashboard({ snapshot, history }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -126,10 +156,7 @@ export default function Dashboard({ snapshot, history }: Props) {
         <SignalFeed signals={snapshot.signals} />
       </div>
 
-      {/* Public discourse — only shown when Reddit data exists */}
-      {snapshot.reddit_sentiment && (
-        <RedditDiscourse reddit={snapshot.reddit_sentiment} />
-      )}
+      <RedditDiscourse reddit={snapshot.reddit_sentiment ?? EMPTY_SOCIAL_SNAPSHOT} />
     </div>
   );
 }
