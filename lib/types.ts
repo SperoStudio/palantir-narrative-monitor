@@ -20,41 +20,23 @@ export interface Signal {
   sentiment: 'Favorable' | 'Critical' | 'Neutral';
   headline: string;
   source: string;
-  publishedAt?: string;
   timeAgo: string;
   issueArea: string;
   surgeWatch: boolean;
 }
 
-export interface RedditThread {
-  title: string;
-  platform?: 'Reddit' | 'X / Public Web';
-  source?: string;
-  subreddit?: string;
+export interface SocialThread {
+  platform: string;
+  summary:  string;
   sentiment: 'Favorable' | 'Critical' | 'Neutral';
-  engagement: number;
   url: string;
-  coverage?: 'Measured' | 'Limited public web';
 }
 
-export interface RedditSentiment {
-  overallScore: number;
-  postCount: number;
-  commentVolume: number;
-  volumeSignal: 'Spike' | 'Normal' | 'Quiet';
-  xMentionCount?: number;
-  platformBreakdown?: {
-    platform: 'Reddit' | 'X / Public Web';
-    sentiment: number;
-    volume: number;
-    coverage: 'Measured' | 'Limited public web';
-  }[];
-  topThreads: RedditThread[];
-  issueBreakdown: {
-    name: string;
-    mentions: number;
-    sentiment: number;
-  }[];
+export interface SocialSentiment {
+  overallScore:   number;
+  volumeSignal:   'Spike' | 'Normal' | 'Quiet';
+  topThreads:     SocialThread[];
+  issueBreakdown: { name: string; mentions: number; sentiment: number }[];
 }
 
 export interface SentimentSnapshot {
@@ -68,7 +50,7 @@ export interface SentimentSnapshot {
   sentiment_trend: SentimentTrend;
   audience_readiness: AudienceReadiness;
   signals: Signal[];
-  reddit_sentiment?: RedditSentiment | null;
+  reddit_sentiment?: SocialSentiment | null; // column kept as-is in DB
 }
 
 export interface AnthropicPayload {

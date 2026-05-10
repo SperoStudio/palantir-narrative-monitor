@@ -23,11 +23,6 @@ function timeAgoToMs(timeAgo: string) {
 }
 
 function signalTime(signal: Signal) {
-  if (signal.publishedAt) {
-    const parsed = new Date(signal.publishedAt).getTime();
-    if (!Number.isNaN(parsed)) return parsed;
-  }
-
   return Date.now() - timeAgoToMs(signal.timeAgo);
 }
 

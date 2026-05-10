@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchSentimentFromClaude } from '@/lib/anthropic';
-import { fetchRedditPosts, scoreRedditSentiment } from '@/lib/reddit';
+import { fetchSocialSentiment } from '@/lib/social';
 import { supabaseServer } from '@/lib/supabase';
 
 type Temp = 'Low' | 'Moderate' | 'High' | 'Critical';
@@ -19,19 +19,19 @@ export const maxDuration = 60;
 
 async function handler(_req: NextRequest) {
   try {
-    // Run news + Reddit in parallel — Reddit uses Haiku so both finish in ~25-30s
-    const [newsResult, redditResult] = await Promise.allSettled([
+    // Run news + social in parallel — both use web search so finish together
+    const [newsResult, socialResult] = await Promise.allSettled([
       fetchSentimentFromClaude(),
-      fetchRedditPosts().then(posts => scoreRedditSentiment(posts)),
+      fetchSocialSentiment(),
     ]);
 
     if (newsResult.status === 'rejected') throw newsResult.reason;
     const payload = newsResult.value;
 
-    if (redditResult.status === 'rejected') {
-      console.warn('[fetch-sentiment] Reddit failed (non-fatal):', redditResult.reason);
+    if (socialResult.status === 'rejected') {
+      console.warn('[fetch-sentiment] Social fetch failed (non-fatal):', socialResult.reason);
     }
-    const reddit = redditResult.status === 'fulfilled' ? redditResult.value : null;
+    const reddit = socialResult.status === 'fulfilled' ? socialResult.value : null;
 
     const db = supabaseServer();
     // .select() forces PostgREST to return the inserted row, which surfaces
