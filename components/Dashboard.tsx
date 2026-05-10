@@ -47,7 +47,6 @@ const EMPTY_SOCIAL_SNAPSHOT = {
 export default function Dashboard({ snapshot, history }: Props) {
   const [refreshError, setRefreshError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isRefreshingSocial, setIsRefreshingSocial] = useState(false);
   const socialSnapshot = snapshot.reddit_sentiment ?? EMPTY_SOCIAL_SNAPSHOT;
 
   const updatedAt = new Date(snapshot.created_at).toLocaleTimeString('en-US', {
@@ -56,15 +55,11 @@ export default function Dashboard({ snapshot, history }: Props) {
     timeZone: 'America/New_York',
   });
 
-  async function handleRefresh(includeSocial = false) {
-    if (includeSocial) setIsRefreshingSocial(true);
-    else setIsRefreshing(true);
+  async function handleRefresh() {
+    setIsRefreshing(true);
     setRefreshError(null);
     try {
-      const res = await fetch(
-        includeSocial ? '/api/fetch-sentiment?social=1' : '/api/fetch-sentiment',
-        { method: 'POST' }
-      );
+      const res = await fetch('/api/fetch-sentiment', { method: 'POST' });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? `HTTP ${res.status}`);
@@ -73,8 +68,7 @@ export default function Dashboard({ snapshot, history }: Props) {
     } catch (err) {
       setRefreshError(err instanceof Error ? err.message : 'Refresh failed');
     } finally {
-      if (includeSocial) setIsRefreshingSocial(false);
-      else setIsRefreshing(false);
+      setIsRefreshing(false);
     }
   }
 
@@ -130,7 +124,7 @@ export default function Dashboard({ snapshot, history }: Props) {
           </span>
           <button
             className="rbtn"
-            onClick={() => handleRefresh(false)}
+            onClick={() => handleRefresh()}
             disabled={isRefreshing}
             aria-label="Refresh dashboard"
           >
@@ -158,12 +152,7 @@ export default function Dashboard({ snapshot, history }: Props) {
       <div className="grid-audience-signals">
         <div className="audience-social-stack">
           <AudienceReadiness readiness={snapshot.audience_readiness} />
-          <RedditDiscourse
-            reddit={socialSnapshot}
-            variant="scores"
-            onRefreshSocial={() => handleRefresh(true)}
-            isRefreshingSocial={isRefreshingSocial}
-          />
+          <RedditDiscourse reddit={socialSnapshot} variant="scores" />
         </div>
         <SignalFeed signals={snapshot.signals} />
       </div>

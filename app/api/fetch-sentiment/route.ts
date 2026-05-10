@@ -19,61 +19,21 @@ export const maxDuration = 60;
 
 async function handler(_req: NextRequest) {
   try {
-    const includeSocial =
-      _req.method === 'GET' || _req.nextUrl.searchParams.get('social') === '1';
-    const socialOnly =
-      _req.method === 'POST' && _req.nextUrl.searchParams.get('social') === '1';
+    // Run news + Reddit in parallel — Reddit uses Haiku so both finish in ~25-30s
+    const [newsResult, redditResult] = await Promise.allSettled([
+      fetchSentimentFromClaude(),
+      fetchRedditPosts().then(posts => scoreRedditSentiment(posts)),
+    ]);
+
+    if (newsResult.status === 'rejected') throw newsResult.reason;
+    const payload = newsResult.value;
+
+    if (redditResult.status === 'rejected') {
+      console.warn('[fetch-sentiment] Reddit failed (non-fatal):', redditResult.reason);
+    }
+    const reddit = redditResult.status === 'fulfilled' ? redditResult.value : null;
 
     const db = supabaseServer();
-
-    if (socialOnly) {
-      const reddit = await fetchRedditPosts().then(posts => scoreRedditSentiment(posts));
-      const { data: latest, error: latestError } = await db
-        .from('sentiment_snapshots')
-        .select('id')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (latestError) throw new Error(latestError.message);
-      if (!latest?.id) throw new Error('No sentiment snapshot exists to attach social data to');
-
-      const { error } = await db
-        .from('sentiment_snapshots')
-        .update({ reddit_sentiment: reddit })
-        .eq('id', latest.id);
-
-      if (error) throw new Error(error.message);
-
-      return NextResponse.json({
-        ok: true,
-        socialOnly: true,
-        socialIncluded: true,
-        postCount: reddit.postCount,
-      });
-    }
-
-    const payload = await fetchSentimentFromClaude();
-    let reddit = null;
-
-    if (includeSocial) {
-      try {
-        reddit = await fetchRedditPosts().then(posts => scoreRedditSentiment(posts));
-      } catch (err) {
-        console.warn('[fetch-sentiment] Social fetch failed:', err);
-      }
-    } else {
-      const { data } = await db
-        .from('sentiment_snapshots')
-        .select('reddit_sentiment')
-        .not('reddit_sentiment', 'is', null)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      reddit = data?.reddit_sentiment ?? null;
-    }
-
     const { error } = await db.from('sentiment_snapshots').insert({
       narrative_health:   payload.narrativeHealth,
       favorable_count:    payload.favorableCount,
@@ -88,11 +48,7 @@ async function handler(_req: NextRequest) {
 
     if (error) throw new Error(error.message);
 
-    return NextResponse.json({
-      ok: true,
-      narrativeHealth: payload.narrativeHealth,
-      socialIncluded: includeSocial,
-    });
+    return NextResponse.json({ ok: true, narrativeHealth: payload.narrativeHealth });
   } catch (err) {
     console.error('[fetch-sentiment]', err);
     return NextResponse.json(
