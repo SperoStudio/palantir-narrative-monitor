@@ -7,7 +7,7 @@ import SentimentChart from './SentimentChart';
 import IssueAreas from './IssueAreas';
 import AudienceReadiness from './AudienceReadiness';
 import SignalFeed from './SignalFeed';
-import SocialPulse from './SocialPulse';
+import SocialThreads, { SocialScores } from './SocialPulse';
 
 interface Props {
   snapshot: SentimentSnapshot;
@@ -64,12 +64,17 @@ export default function Dashboard({ snapshot, history }: Props) {
       </div>
 
       <div className="grid-audience-signals">
-        <AudienceReadiness readiness={snapshot.audience_readiness} />
+        {/* Left column: audience scores stacked above social scores */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <AudienceReadiness readiness={snapshot.audience_readiness} />
+          <SocialScores social={snapshot.reddit_sentiment ?? null} />
+        </div>
         <SignalFeed signals={snapshot.signals} />
       </div>
 
+      {/* Threads strip — full width, bottom of page */}
       <div style={{ marginTop: '12px' }}>
-        <SocialPulse social={snapshot.reddit_sentiment ?? null} />
+        <SocialThreads social={snapshot.reddit_sentiment ?? null} />
       </div>
     </div>
   );
