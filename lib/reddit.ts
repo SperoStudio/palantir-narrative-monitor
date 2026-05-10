@@ -161,7 +161,7 @@ export async function scoreRedditSentiment(posts: RedditPost[]): Promise<RedditS
 
   const response = await client.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 2200,
+    max_tokens: 4000,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     tools: [{ type: 'web_search_20250305', name: 'web_search' } as any],
     messages: [{ role: 'user', content: prompt }],
@@ -172,5 +172,13 @@ export async function scoreRedditSentiment(posts: RedditPost[]): Promise<RedditS
   const match = text.match(/\{[\s\S]*\}/);
   if (!match) throw new Error('Reddit sentiment response contained no JSON');
 
-  return JSON.parse(match[0]) as RedditSentiment;
+  try {
+    return JSON.parse(match[0]) as RedditSentiment;
+  } catch {
+    // Response was likely truncated — strip trailing incomplete element and retry
+    const cleaned = match[0]
+      .replace(/,\s*$/, '')           // trailing comma at end
+      .replace(/,\s*([}\]])/g, '$1'); // comma before closing bracket
+    return JSON.parse(cleaned) as RedditSentiment;
+  }
 }
