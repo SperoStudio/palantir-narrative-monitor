@@ -20,13 +20,10 @@ export interface RedditPost {
 
 export interface RedditThread {
   title: string;
-  platform?: 'Reddit' | 'X / Public Web';
-  source?: string;
-  subreddit?: string;
+  subreddit: string;
   sentiment: 'Favorable' | 'Critical' | 'Neutral';
   engagement: number;
   url: string;
-  coverage?: 'Measured' | 'Limited public web';
 }
 
 export interface RedditSentiment {
@@ -34,13 +31,6 @@ export interface RedditSentiment {
   postCount: number;
   commentVolume: number;
   volumeSignal: 'Spike' | 'Normal' | 'Quiet';
-  xMentionCount?: number;
-  platformBreakdown?: {
-    platform: 'Reddit' | 'X / Public Web';
-    sentiment: number;
-    volume: number;
-    coverage: 'Measured' | 'Limited public web';
-  }[];
   topThreads: RedditThread[];
   issueBreakdown: {
     name: string;
@@ -99,86 +89,83 @@ export async function fetchRedditPosts(): Promise<RedditPost[]> {
 export async function scoreRedditSentiment(posts: RedditPost[]): Promise<RedditSentiment> {
   const commentVolume = posts.reduce((sum, p) => sum + p.numComments, 0);
 
+  if (posts.length === 0) {
+    return {
+      overallScore: 50,
+      postCount: 0,
+      commentVolume: 0,
+      volumeSignal: 'Quiet',
+      topThreads: [],
+      issueBreakdown: [
+        { name: 'Healthcare AI',      mentions: 0, sentiment: 50 },
+        { name: 'Defense / security', mentions: 0, sentiment: 50 },
+        { name: 'Economic impact',    mentions: 0, sentiment: 50 },
+        { name: 'AI regulation',      mentions: 0, sentiment: 50 },
+        { name: 'Data privacy',       mentions: 0, sentiment: 50 },
+      ],
+    };
+  }
+
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+  // Send only the fields Claude needs to analyze — no raw URLs which can
+  // contain unescaped characters that corrupt JSON output.
   const postsText = posts
     .slice(0, 40)
-    .map(
-      p =>
-        `[r/${p.subreddit}] ${p.title} — ${p.score} upvotes, ${p.numComments} comments — ${p.url}`
+    .map((p, i) =>
+      `${i + 1}. [r/${p.subreddit}] ${p.title} | upvotes:${p.score} comments:${p.numComments}`
     )
-    .join('\n') || 'No usable non-financial Reddit posts were found from public Reddit search.';
+    .join('\n');
 
   const prompt =
-    'You are a public-opinion analyst. Analyze public social-media narrative sentiment about Palantir Technologies, not investor sentiment. ' +
-    'Use the Reddit posts below as measured public-discourse inputs from non-financial communities. ' +
-    'Also use web search to find representative, publicly indexed X/Twitter posts or public-web references to X discourse about Palantir across privacy, ICE/immigration, defense AI, healthcare AI, NHS, government data sharing, and AI regulation. ' +
-    'If Reddit is sparse, still produce a useful X / Public Web snapshot from publicly indexed sources. ' +
-    'Exclude stock-price, earnings, trading, and $PLTR investor chatter. Treat X as limited public-web coverage, not complete platform coverage.\n\n' +
-    'Posts:\n' +
-    postsText +
-    '\n\nReturn ONLY this JSON object (no backticks, no markdown, no prose):\n' +
+    'You are a public-opinion analyst. Score the narrative sentiment in these Reddit posts about ' +
+    'Palantir Technologies. These come from non-financial communities — focus on public perception ' +
+    'of privacy, defense contracts, healthcare AI, immigration enforcement, and AI regulation. ' +
+    'Ignore stock price or investor sentiment.\n\n' +
+    'Posts:\n' + postsText + '\n\n' +
+    'Return ONLY valid JSON. No markdown, no backticks, no commentary. ' +
+    'For topThreads, use ONLY the post titles exactly as written above — do not add or invent content. ' +
+    'Limit topThreads to 6 items maximum.\n\n' +
     JSON.stringify({
-      overallScore: '<0-100, where 50 = neutral public opinion>',
+      overallScore: 50,
       postCount: posts.length,
       commentVolume,
       volumeSignal: 'Spike or Normal or Quiet',
-      xMentionCount: '<number of representative X/public-web mentions found; 0 if none>',
-      platformBreakdown: [
-        {
-          platform: 'Reddit',
-          sentiment: '<0-100>',
-          volume: posts.length,
-          coverage: 'Measured',
-        },
-        {
-          platform: 'X / Public Web',
-          sentiment: '<0-100>',
-          volume: '<representative public-web mention count; do not imply firehose coverage>',
-          coverage: 'Limited public web',
-        },
-      ],
       topThreads: [
         {
-          platform: 'Reddit or X / Public Web',
-          source: '<subreddit name, X handle, or publication/reference source>',
-          subreddit: '<subreddit name when platform is Reddit; otherwise omit or empty string>',
-          title: '<post title, post paraphrase, or public-web X discourse summary, max 100 chars>',
-          sentiment: 'Favorable or Critical or Neutral',
-          engagement: '<score + numComments for Reddit, or visible engagement/0 for X public-web>',
-          url: '<full source url>',
-          coverage: 'Measured or Limited public web',
+          title:      '<exact post title from list above, truncated to 80 chars>',
+          subreddit:  '<subreddit>',
+          sentiment:  'Favorable or Critical or Neutral',
+          engagement: 0,
+          url:        '',
         },
       ],
       issueBreakdown: [
-        { name: 'Healthcare AI',      mentions: '<int>', sentiment: '<0-100>' },
-        { name: 'Defense / security', mentions: '<int>', sentiment: '<0-100>' },
-        { name: 'Economic impact',    mentions: '<int>', sentiment: '<0-100>' },
-        { name: 'AI regulation',      mentions: '<int>', sentiment: '<0-100>' },
-        { name: 'Data privacy',       mentions: '<int>', sentiment: '<0-100>' },
+        { name: 'Healthcare AI',      mentions: 0, sentiment: 50 },
+        { name: 'Defense / security', mentions: 0, sentiment: 50 },
+        { name: 'Economic impact',    mentions: 0, sentiment: 50 },
+        { name: 'AI regulation',      mentions: 0, sentiment: 50 },
+        { name: 'Data privacy',       mentions: 0, sentiment: 50 },
       ],
     });
 
   const response = await client.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 4000,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    tools: [{ type: 'web_search_20250305', name: 'web_search' } as any],
-    messages: [{ role: 'user', content: prompt }],
+    model:      'claude-sonnet-4-6',
+    max_tokens: 2000,
+    messages:   [{ role: 'user', content: prompt }],
   });
 
-  const textBlocks = response.content.filter((b) => b.type === 'text');
-  const text = (textBlocks[textBlocks.length - 1] as { type: 'text'; text: string })?.text ?? '';
+  const text = (response.content[0] as { type: 'text'; text: string })?.text ?? '';
   const match = text.match(/\{[\s\S]*\}/);
   if (!match) throw new Error('Reddit sentiment response contained no JSON');
 
-  try {
-    return JSON.parse(match[0]) as RedditSentiment;
-  } catch {
-    // Response was likely truncated — strip trailing incomplete element and retry
-    const cleaned = match[0]
-      .replace(/,\s*$/, '')           // trailing comma at end
-      .replace(/,\s*([}\]])/g, '$1'); // comma before closing bracket
-    return JSON.parse(cleaned) as RedditSentiment;
-  }
+  // Re-attach the real URLs now that JSON is safely parsed
+  const result = JSON.parse(match[0]) as RedditSentiment;
+  const urlMap = new Map(posts.map(p => [p.title.slice(0, 80), p.url]));
+  result.topThreads = result.topThreads.map(t => ({
+    ...t,
+    url: urlMap.get(t.title) ?? urlMap.get(t.title.slice(0, 80)) ?? '',
+  }));
+
+  return result;
 }

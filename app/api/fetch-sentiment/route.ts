@@ -41,7 +41,6 @@ async function handler(_req: NextRequest) {
         socialOnly: true,
         socialIncluded: true,
         postCount: reddit.postCount,
-        xMentionCount: reddit.xMentionCount ?? 0,
       });
     }
 
