@@ -3,56 +3,27 @@ import type { AnthropicPayload } from './types';
 
 const SYSTEM_PROMPT =
   'You are a media intelligence analyst for Palantir Technologies. ' +
-  'Search current news and return ONLY a raw JSON object. ' +
-  'No markdown. No code blocks. No explanation. Just the JSON.';
+  'Make exactly ONE web search using a single broad query to gather current Palantir news. ' +
+  'Do not make multiple searches. Use only what that one search returns. ' +
+  'Return ONLY a raw JSON object. No markdown. No code blocks. No explanation. Just the JSON.';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-const USER_PROMPT = () => {
-  const d = today();
-  return (
-    `Search for recent Palantir Technologies news (as of ${d}) across: ` +
-    'healthcare AI, defense/military contracts, economic impact and jobs, ' +
-    'AI regulation, data privacy criticism, and any breaking news today. ' +
-    'For every signal, include publishedAt as the original article publication timestamp in ISO 8601 format. ' +
-    'Sort signals newest to oldest by publishedAt. ' +
-    'Return ONLY this JSON object (no backticks, no markdown, no prose):\n' +
-    JSON.stringify({
-      narrativeHealth: '<0-100>',
-      favorableCount: '<int>',
-      hostileCount: '<int>',
-      newsCycleTemp: 'Low or Moderate or High or Critical',
-      issueAreas: [
-        { name: 'Healthcare AI',          sentiment: '<0-100>', trend: 'up or flat or down' },
-        { name: 'Defense / security',     sentiment: '<0-100>', trend: 'up or flat or down' },
-        { name: 'Economic impact',        sentiment: '<0-100>', trend: 'up or flat or down' },
-        { name: 'AI regulation',          sentiment: '<0-100>', trend: 'up or flat or down' },
-        { name: 'Data privacy',           sentiment: '<0-100>', trend: 'up or flat or down' },
-      ],
-      sentimentTrend: {
-        labels: ['<7 recent dates>'],
-        favorable: ['<7 ints>'],
-        critical:  ['<7 ints>'],
-      },
-      audienceReadiness: {
-        generalPublic: '<0-100, apply -10 calibration: Palantir brand perception is significantly depressed vs. peers>',
-        stakeholders:  '<0-100, apply -10 calibration: Palantir brand perception is significantly depressed vs. peers>',
-        policymakers:  '<0-100, apply -10 calibration: Palantir brand perception is significantly depressed vs. peers>',
-      },
-      signals: [
-        {
-          sentiment:  'Favorable or Critical or Neutral',
-          headline:   '<real headline>',
-          source:     '<publication>',
-          publishedAt: '<ISO timestamp, e.g. 2026-05-10T14:32:00Z>',
-          timeAgo:    '<Xh ago>',
-          issueArea:  '<area>',
-          surgeWatch: '<bool>',
-        },
-      ],
-    })
-  );
-};
+const USER_PROMPT = () =>
+  `Search "Palantir Technologies news ${today()}" — one search only. ` +
+  'Score narrative sentiment (not stock). Return ONLY valid JSON, no markdown:\n' +
+  '{"narrativeHealth":50,"favorableCount":0,"hostileCount":0,"newsCycleTemp":"Moderate",' +
+  '"issueAreas":[' +
+    '{"name":"Healthcare AI","sentiment":50,"trend":"flat"},' +
+    '{"name":"Defense / security","sentiment":50,"trend":"flat"},' +
+    '{"name":"Economic impact","sentiment":50,"trend":"flat"},' +
+    '{"name":"AI regulation","sentiment":50,"trend":"flat"},' +
+    '{"name":"Data privacy","sentiment":50,"trend":"flat"}],' +
+  '"sentimentTrend":{"labels":["d1","d2","d3","d4","d5","d6","d7"],"favorable":[0,0,0,0,0,0,0],"critical":[0,0,0,0,0,0,0]},' +
+  '"audienceReadiness":{"generalPublic":50,"stakeholders":50,"policymakers":50},' +
+  '"signals":[{"sentiment":"Neutral","headline":"headline","source":"source","timeAgo":"1h ago","issueArea":"area","surgeWatch":false}]}' +
+  '\nReplace all placeholder values with real scored data from the search results. ' +
+  'Apply -10 point calibration to audienceReadiness scores — Palantir brand perception is depressed vs peers.';
 
 export async function fetchSentimentFromClaude(): Promise<AnthropicPayload> {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 0 });
