@@ -55,7 +55,7 @@ const USER_PROMPT = () => {
 };
 
 export async function fetchSentimentFromClaude(): Promise<AnthropicPayload> {
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 0 });
 
   const response = await client.messages.create({
     model: 'claude-sonnet-4-6',

@@ -106,7 +106,7 @@ export async function scoreRedditSentiment(posts: RedditPost[]): Promise<RedditS
     };
   }
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 0 });
 
   // Send only the fields Claude needs to analyze — no raw URLs which can
   // contain unescaped characters that corrupt JSON output.
