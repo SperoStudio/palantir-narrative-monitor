@@ -12,7 +12,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 const USER_PROMPT = () =>
   `Search "Palantir Technologies news ${today()}" — one search only. ` +
   'Score narrative sentiment (not stock). Return ONLY valid JSON, no markdown:\n' +
-  '{"narrativeHealth":50,"favorableCount":0,"hostileCount":0,"newsCycleTemp":"Moderate",' +
+  '{"narrativeHealth":50,"favorableCount":0,"hostileCount":0,"newsCycleTemp":"Low|Moderate|High|Critical",' +
   '"issueAreas":[' +
     '{"name":"Healthcare AI","sentiment":50,"trend":"flat"},' +
     '{"name":"Defense / security","sentiment":50,"trend":"flat"},' +

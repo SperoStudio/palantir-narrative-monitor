@@ -3,6 +3,15 @@ import { fetchSentimentFromClaude } from '@/lib/anthropic';
 import { fetchRedditPosts, scoreRedditSentiment } from '@/lib/reddit';
 import { supabaseServer } from '@/lib/supabase';
 
+type Temp = 'Low' | 'Moderate' | 'High' | 'Critical';
+function normalizeTemp(t: string): Temp {
+  const v = t.toLowerCase();
+  if (v.includes('critical')) return 'Critical';
+  if (v.includes('high'))     return 'High';
+  if (v.includes('low'))      return 'Low';
+  return 'Moderate';
+}
+
 // Vercel Cron calls this as GET and includes the heavier social snapshot.
 // The main Refresh button calls POST for a faster news-only update; POST
 // with ?social=1 runs the full news + social pass on demand.
@@ -69,7 +78,7 @@ async function handler(_req: NextRequest) {
       narrative_health:   payload.narrativeHealth,
       favorable_count:    payload.favorableCount,
       hostile_count:      payload.hostileCount,
-      news_cycle_temp:    payload.newsCycleTemp,
+      news_cycle_temp:    normalizeTemp(payload.newsCycleTemp),
       issue_areas:        payload.issueAreas,
       sentiment_trend:    payload.sentimentTrend,
       audience_readiness: payload.audienceReadiness,
