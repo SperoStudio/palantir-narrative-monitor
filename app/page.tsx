@@ -1,9 +1,8 @@
 import { getLatestSnapshot, getSnapshotHistory } from '@/lib/supabase';
 import Dashboard from '@/components/Dashboard';
 
-// Revalidate every 5 minutes so the server-rendered snapshot stays fresh
-// between cron runs without always hitting Supabase on every request.
-export const revalidate = 300;
+// Always fetch fresh from Supabase — this is a monitoring dashboard.
+export const dynamic = 'force-dynamic';
 
 const DEMO_SNAPSHOT = {
   id: 'demo',
