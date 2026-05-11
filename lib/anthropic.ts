@@ -31,7 +31,7 @@ const USER_PROMPT = () =>
   'Apply -10 point calibration to audienceReadiness scores — Palantir brand perception is depressed vs peers.';
 
 export async function fetchSentimentFromClaude(): Promise<AnthropicPayload> {
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 0 });
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 0, timeout: 55000 });
 
   const response = await client.messages.create({
     model: 'claude-sonnet-4-6',

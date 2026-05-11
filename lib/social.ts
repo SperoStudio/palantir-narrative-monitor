@@ -54,7 +54,7 @@ const USER_PROMPT = () =>
   `overallScore is 0-100 where 50=neutral, lower=more critical.`;
 
 export async function fetchSocialSentiment(): Promise<SocialSentiment> {
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 0 });
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 0, timeout: 55000 });
 
   const response = await client.messages.create({
     model:      'claude-sonnet-4-6',
