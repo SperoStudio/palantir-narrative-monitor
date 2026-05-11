@@ -2,21 +2,16 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { AnthropicPayload } from './types';
 
 const SYSTEM_PROMPT =
-  'You are a media intelligence analyst for Palantir Technologies focused on NON-FINANCIAL narrative risk. ' +
+  'You are a media intelligence analyst for Palantir Technologies. ' +
   'Make exactly ONE web search using a single broad query to gather current Palantir news. ' +
   'Do not make multiple searches. Use only what that one search returns. ' +
-  'EXCLUDE entirely: stock price, earnings, revenue, analyst ratings, market cap, share price, ' +
-  'investment thesis, trading, financial performance, Wall Street, investor day, quarterly results. ' +
-  'INCLUDE only: civil liberties concerns, government surveillance criticism, defense contract controversies, ' +
-  'data privacy issues, healthcare data ethics, immigration enforcement involvement, employee culture, ' +
-  'political controversy, public accountability, journalism investigations, regulatory scrutiny. ' +
   'Return ONLY a raw JSON object. No markdown. No code blocks. No explanation. Just the JSON.';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
 const USER_PROMPT = () =>
-  `Search "Palantir Technologies controversy criticism privacy ${today()}" — one search only. ` +
-  'Score NON-FINANCIAL narrative sentiment only. Skip any signal about stock, earnings, or investors. Return ONLY valid JSON, no markdown:\n' +
+  `Search "Palantir Technologies news ${today()}" — one search only. ` +
+  'Score narrative sentiment (not stock). Return ONLY valid JSON, no markdown:\n' +
   '{"narrativeHealth":50,"favorableCount":0,"hostileCount":0,"newsCycleTemp":"Low|Moderate|High|Critical",' +
   '"issueAreas":[' +
     '{"name":"Healthcare AI","sentiment":50,"trend":"flat"},' +
